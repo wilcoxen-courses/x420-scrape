@@ -2,7 +2,9 @@
 demo.py
 Apr 2025 PJW
 
-Demonstrate several web scraping techniques.
+Demonstrate several web scraping techniques. Stores output in a SQLite 
+database with two tables: one for races and one for individual results.
+The tables are created on the fly by calls to pd.to_sql().
 """
 
 import pandas as pd
@@ -24,7 +26,7 @@ base_url = "https://www.leonetiming.com/results/index.php"
 
 #  
 #  Server's ID numbers of races, obtained from looking at URLs offered
-#  by the server. Uncomment out more years if you're interested.
+#  by the server.
 #
 
 races = {
@@ -96,7 +98,7 @@ if has_races:
 #  Say what we have to do
 #
 
-print('Races remaining to scrape')
+print('\nRaces remaining to scrape:')
 print(json.dumps(races,indent=4))
 
 #
@@ -260,7 +262,9 @@ for year,race in races.items():
     #  Will be stored in a "races" table.
     #
     
-    raceinfo = pd.DataFrame(columns=["year","title"],data=[[year,title]])
+    raceinfo = pd.DataFrame(
+        columns=["year","title","id","entries"],
+        data=[[year,title,race,len(results)]])
 
     #
     #  Add the results to table "results" and make an entry in table "races"
