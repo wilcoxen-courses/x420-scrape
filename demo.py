@@ -38,6 +38,12 @@ races = {
     }
 
 #
+#  Can force reloading by adding years to this list
+#
+
+force_reload = [] 
+
+#
 #  Connect to the database
 #
     
@@ -49,19 +55,42 @@ con = sqlite3.connect(dbname)
 #  accordingly.
 #
 
-cur = con.execute("SELECT * FROM sqlite_schema WHERE name='races';")
-row = cur.fetchone()
+tables = pd.read_sql("SELECT * FROM sqlite_schema;",con)
+print(tables)
 
-if row is not None:
+has_races = 'races' in list( tables['name'] )
+
+if has_races:
+    
+    print('\nTable for races found\n')
     
     cur = con.execute("SELECT DISTINCT year FROM races;")
     rows = cur.fetchall()
     
     years_done = [r[0] for r in rows]
-    
+
     for year in years_done:
         if year in races:
-            del races[year]
+            
+            #
+            #  Is this in the force_reload list? If so, erase current data.
+            #
+            
+            if year in force_reload:
+                with con:
+                    cur = con.execute(f"DELETE FROM races WHERE year={year};")
+                    n_races = cur.rowcount
+                    cur = con.execute(f"DELETE FROM results WHERE year={year};")
+                    n_results = cur.rowcount
+                    print(f"Removed {n_races} race with {n_results} entries in {year}")
+            
+            #
+            #  Found but not in force_reload: remove from to-do list
+            #
+            
+            else:
+                print('Data already collected for',year)
+                del races[year]
 
 #
 #  Say what we have to do
